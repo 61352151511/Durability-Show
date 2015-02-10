@@ -1,0 +1,21 @@
+[
+{
+  "modid": "DurabilityShow",
+  "name": "Durability Show",
+  "description": "Shows durability of tools with advanced tooltips off.",
+  "version": "1.2.0",
+  "mcversion": "1.7.10",
+  "url": "",
+  "updateUrl": "",
+  "authorList": [
+    "Six-One-Three"
+  ],
+  "credits": "Six-One-Three",
+  "logoFile": "",
+  "screenshots": [
+  ],
+  "parent":"",
+  "dependencies": [
+  ]
+}
+]
