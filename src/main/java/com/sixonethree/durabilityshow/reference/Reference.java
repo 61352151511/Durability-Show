@@ -3,7 +3,7 @@ package com.sixonethree.durabilityshow.reference;
 public class Reference {
 	public static final String MOD_ID = "DurabilityShow";
 	public static final String MOD_NAME = "Durability Show";
-	public static final String VERSION = "2.0.0";
+	public static final String VERSION = "2.1.0";
 	public static final String CLIENT_PROXY = "com.sixonethree.durabilityshow.proxy.ClientProxy";
 	public static final String SERVER_PROXY = "com.sixonethree.durabilityshow.proxy.ServerProxy";
 	public static final String GUI_FACTORY_CLASS = "com.sixonethree.durabilityshow.client.gui.GuiFactory";

@@ -6,6 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.inventory.GuiInventory;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.entity.Entity;
@@ -19,8 +21,6 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import org.lwjgl.opengl.GL11;
-
 public class GuiItemDurability extends Gui {
 	private static Minecraft minecraftInstance;
 	private static EnumGuiState guiState = EnumGuiState.OPEN;
@@ -30,6 +30,16 @@ public class GuiItemDurability extends Gui {
 	private static int color_white = Color.WHITE.getRGB();
 	private static FontRenderer fontRenderer;
 	private static RenderItem itemRender;
+	private static boolean renderCharacter = false;
+	private static int overrideRenderCharacterTime = 0;
+	private static Object[][] lastArmorSet = new Object[][] {
+		new String[] {
+			"", "", "", ""
+		},
+		new Integer[] {
+			0, 0, 0, 0
+		}
+	};
 	
 	private static final int BOOTS = 1;
 	private static final int LEGGINGS = 2;
@@ -45,6 +55,10 @@ public class GuiItemDurability extends Gui {
 	public static void raiseOffset() { offsetPosition ++; }
 	public static void setCloseSize(int size) { closeSize = size; }
 	public static int getCloseSize() { return closeSize; }
+	public static int getOverrideTime() { return overrideRenderCharacterTime; }
+	public static void decOverrideTime() { overrideRenderCharacterTime --; }
+	public static boolean getRenderCharacter() { return renderCharacter; }
+	public static void setRenderChararcter(boolean render) { renderCharacter = render; }
 	
 	public GuiItemDurability(Minecraft MC) {
 		super();
@@ -73,85 +87,150 @@ public class GuiItemDurability extends Gui {
 	}
 	
 	@SubscribeEvent(priority = EventPriority.NORMAL) public void onRender(RenderGameOverlayEvent.Post event) {
-		InventoryPlayer Inventory = minecraftInstance.thePlayer.inventory;
+		EntityPlayer effectivePlayer = minecraftInstance.thePlayer;
+		boolean noSpec = false;
 		if (minecraftInstance.thePlayer.isSpectator()) {
 			Entity spec = minecraftInstance.getRenderViewEntity();
 			if (spec != null) {
 				if (spec instanceof EntityPlayer) {
-					EntityPlayer specing = (EntityPlayer) spec;
-					Inventory = specing.inventory;
+					effectivePlayer = (EntityPlayer) spec;
+				} else {
+					noSpec = true;
 				}
+			} else {
+				noSpec = true;
 			}
 		}
-		ItemStack current = Inventory.getCurrentItem();
-		ItemStack boots = Inventory.armorInventory[0];
-		ItemStack leggings = Inventory.armorInventory[1];
-		ItemStack chestplate = Inventory.armorInventory[2];
-		ItemStack helmet = Inventory.armorInventory[3];
+		InventoryPlayer inventory = effectivePlayer.inventory;
+		ItemStack current = inventory.getCurrentItem();
+		ItemStack boots = inventory.armorInventory[0];
+		ItemStack leggings = inventory.armorInventory[1];
+		ItemStack chestplate = inventory.armorInventory[2];
+		ItemStack helmet = inventory.armorInventory[3];
 		
 		if (event.isCanceled() ||
 			allNull(current, boots, leggings, chestplate, helmet) ||
 			minecraftInstance.thePlayer.capabilities.isCreativeMode ||
+			noSpec ||
 			event.type != ElementType.EXPERIENCE) return;
 		
-		ScaledResolution scaled = new ScaledResolution(minecraftInstance, minecraftInstance.displayWidth, minecraftInstance.displayHeight);
-		int armorOffset = 16;
-		int width = scaled.getScaledWidth() + offsetPosition;
-		int height = scaled.getScaledHeight();
-		GL11.glColor4f(1F, 1F, 1F, 1F);
-		RenderHelper.enableStandardItemLighting();
-		RenderHelper.enableGUIStandardItemLighting();
-		boolean armorAllNull = allNull(boots, leggings, chestplate, helmet);
+		/* Compare to last armor set */
 		
-		int[] params = new int[] {width, height, armorOffset, armorAllNull ? 1 : 0};
-		int[] params2 = new int[] {width, height, 0, armorAllNull ? 1 : 0};
+		String curHelmetName = "";
+		String curChestplateName = "";
+		String curLeggingsName = "";
+		String curBootsName = "";
+		Integer curHelmetDur = 0;
+		Integer curChestplateDur = 0;
+		Integer curLeggingsDur = 0;
+		Integer curBootsDur = 0;
 		
-		if (corner.name().contains("RIGHT")) {
-			params2 = renderItem(current, params, 1);
-			if (!armorAllNull) {
-				renderArmor(boots, BOOTS, params2, 2);
-				renderArmor(leggings, LEGGINGS, params2, 2);
-				renderArmor(chestplate, CHESTPLATE, params2, 2);
-				renderArmor(helmet, HELMET, params2, 2);
-			}
-		} else {
-			boolean params2gotten = false;
-			if (boots != null) {
-				if (!params2gotten) {
-					params2 = renderArmor(boots, BOOTS, params, 1);
-					params2gotten = true;
-				} else {
-					renderArmor(boots, BOOTS, params, 1);
-				}
-			}
-			if (leggings != null) {
-				if (!params2gotten) {
-					params2 = renderArmor(leggings, LEGGINGS, params, 1);
-					params2gotten = true;
-				} else {
-					renderArmor(leggings, LEGGINGS, params, 1);
-				}
-			}
-			if (chestplate != null) {
-				if (!params2gotten) {
-					params2 = renderArmor(chestplate, CHESTPLATE, params, 1);
-					params2gotten = true;
-				} else {
-					renderArmor(chestplate, CHESTPLATE, params, 1);
-				}
-			}
-			if (helmet != null) {
-				if (!params2gotten) {
-					params2 = renderArmor(helmet, HELMET, params, 1);
-					params2gotten = true;
-				} else {
-					renderArmor(helmet, HELMET, params, 1);
-				}
-			}
-			renderItem(current, params2, 2);
+		if (helmet != null) {
+			curHelmetName = helmet.getUnlocalizedName();
+			curHelmetDur = helmet.getItemDamage();
+		}
+		if (chestplate != null) {
+			curChestplateName = chestplate.getUnlocalizedName();
+			curChestplateDur = chestplate.getItemDamage();
+		}
+		if (leggings != null) {
+			curLeggingsName = leggings.getUnlocalizedName();
+			curLeggingsDur = leggings.getItemDamage();
+		}
+		if (boots != null) {
+			curBootsName = boots.getUnlocalizedName();
+			curBootsDur = boots.getItemDamage();
 		}
 		
-		RenderHelper.disableStandardItemLighting();
+		String lastHelmetName = (String) lastArmorSet[0][0];
+		String lastChestplateName = (String) lastArmorSet[0][1];
+		String lastLeggingsName = (String) lastArmorSet[0][2];
+		String lastBootsName = (String) lastArmorSet[0][3];
+		if (!lastHelmetName.equalsIgnoreCase(curHelmetName) ||
+			lastArmorSet[1][0] != Integer.valueOf(curHelmetDur) ||
+			!lastChestplateName.equalsIgnoreCase(curChestplateName) ||
+			lastArmorSet[1][1] != Integer.valueOf(curChestplateDur) ||
+			!lastLeggingsName.equalsIgnoreCase(curLeggingsName) ||
+			lastArmorSet[1][2] != Integer.valueOf(curLeggingsDur) ||
+			!lastBootsName.equalsIgnoreCase(curBootsName) ||
+			lastArmorSet[1][3] != Integer.valueOf(curBootsDur)) {
+			overrideRenderCharacterTime = 40;
+		}
+		
+		lastArmorSet[0][0] = curHelmetName;
+		lastArmorSet[0][1] = curChestplateName;
+		lastArmorSet[0][2] = curLeggingsName;
+		lastArmorSet[0][3] = curBootsName;
+		lastArmorSet[1][0] = curHelmetDur;
+		lastArmorSet[1][1] = curChestplateDur;
+		lastArmorSet[1][2] = curLeggingsDur;
+		lastArmorSet[1][3] = curBootsDur;
+		
+		/* Begin rendering */
+		
+		ScaledResolution scaled = new ScaledResolution(minecraftInstance);
+		
+		if (renderCharacter && overrideRenderCharacterTime <= 0) {
+			renderCharacter(corner, 10, scaled, effectivePlayer);
+		} else {
+			int armorOffset = 16;
+			int width = scaled.getScaledWidth() + offsetPosition;
+			int height = scaled.getScaledHeight();
+			GlStateManager.color(1, 1, 1, 1);
+			RenderHelper.enableStandardItemLighting();
+			RenderHelper.enableGUIStandardItemLighting();
+			boolean armorAllNull = allNull(boots, leggings, chestplate, helmet);
+			
+			int[] params = new int[] {width, height, armorOffset, armorAllNull ? 1 : 0};
+			int[] params2 = new int[] {width, height, 0, armorAllNull ? 1 : 0};
+			
+			if (corner.name().contains("RIGHT")) {
+				params2 = renderItem(current, params, 1);
+				if (!armorAllNull) {
+					renderArmor(boots, BOOTS, params2, 2);
+					renderArmor(leggings, LEGGINGS, params2, 2);
+					renderArmor(chestplate, CHESTPLATE, params2, 2);
+					renderArmor(helmet, HELMET, params2, 2);
+				}
+			} else {
+				boolean params2gotten = false;
+				if (boots != null) {
+					if (!params2gotten) {
+						params2 = renderArmor(boots, BOOTS, params, 1);
+						params2gotten = true;
+					} else {
+						renderArmor(boots, BOOTS, params, 1);
+					}
+				}
+				if (leggings != null) {
+					if (!params2gotten) {
+						params2 = renderArmor(leggings, LEGGINGS, params, 1);
+						params2gotten = true;
+					} else {
+						renderArmor(leggings, LEGGINGS, params, 1);
+					}
+				}
+				if (chestplate != null) {
+					if (!params2gotten) {
+						params2 = renderArmor(chestplate, CHESTPLATE, params, 1);
+						params2gotten = true;
+					} else {
+						renderArmor(chestplate, CHESTPLATE, params, 1);
+					}
+				}
+				if (helmet != null) {
+					if (!params2gotten) {
+						params2 = renderArmor(helmet, HELMET, params, 1);
+						params2gotten = true;
+					} else {
+						renderArmor(helmet, HELMET, params, 1);
+					}
+				}
+				renderItem(current, params2, 2);
+			}
+			
+			RenderHelper.disableStandardItemLighting();
+		}
 	}
 	
 	private void renderItemAndEffectIntoGUI(ItemStack stack, int x, int y) {
@@ -217,5 +296,13 @@ public class GuiItemDurability extends Gui {
 			if (turn == 2) setCloseSize(16 + damageStringWidth + armorOffset);
 		}
 		return retStatement;
+	}
+	
+	private void renderCharacter(EnumCorner side, int xPos, ScaledResolution scaled, EntityPlayer effectivePlayer) {
+		if (side.name().contains("LEFT")) {
+			GuiInventory.drawEntityOnScreen(xPos - offsetPosition, scaled.getScaledHeight(), xPos - (((xPos / 2) * -1) * 2), -50, - effectivePlayer.rotationPitch, effectivePlayer);
+		} else {
+			GuiInventory.drawEntityOnScreen((scaled.getScaledWidth() - xPos) + offsetPosition, scaled.getScaledHeight(), xPos - (((xPos / 2) * -1) * 2), 50, - effectivePlayer.rotationPitch, effectivePlayer);
+		}
 	}
 }

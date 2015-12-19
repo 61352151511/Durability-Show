@@ -19,5 +19,8 @@ public class OnTickEvent {
 			GuiItemDurability.lowerOffset();
 			if (GuiItemDurability.getOffset() <= 0) GuiItemDurability.setGuiState(EnumGuiState.OPEN);
 		}
+		if (GuiItemDurability.getOverrideTime() > 0) {
+			GuiItemDurability.decOverrideTime();
+		}
 	}
 }

@@ -11,27 +11,30 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
     }
 }
 
-apply plugin: 'forge'
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
 
-version = "1.8-2.0.0"
+ext.configFile = file('build.properties')
+
+ext.config = parseConfig(configFile)
+
+version = "1.8.8-2.1.0"
 group= "com.sixonethree.durabilityshow"
 archivesBaseName = "DurabilityShow"
-ext.configFile = file "C:/Users/Mitch/Central Storage/eclipseworkspace/build.properties"
-
-configFile.withReader {
-	def prop = new Properties()
-	prop.load(it)
-	project.ext.config = new ConfigSlurper().parse prop
-}
 
 minecraft {
-    version = config.forge_version
+    version = "${config.mc_version}-${config.forge_version}-${config.mc_version}"
     runDir = "eclipse"
-    mappings = config.mappings
+    if (config.mappings == "today") {
+	    mappings = "snapshot_" + getDate()
+	} else {
+		mappings = "${config.mappings}"
+	}
 }
 
 repositories {
@@ -41,8 +44,7 @@ repositories {
      }
 }
 
-dependencies {
-}
+dependencies {}
 
 processResources
 {
@@ -57,5 +59,13 @@ processResources
         
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'
+    }
+}
+
+def parseConfig(File config) {
+    config.withReader {
+        def prop = new Properties()
+        prop.load(it)
+        return (new ConfigSlurper().parse(prop))
     }
 }
