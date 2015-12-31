@@ -5,7 +5,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 import com.sixonethree.durabilityshow.client.gui.GuiItemDurability;
 
-public class ClientProxy extends CommonProxy {
+public class ClientProxy extends ServerProxy {
 	@Override public void init() {
 		super.init();
 		MinecraftForge.EVENT_BUS.register(new GuiItemDurability(Minecraft.getMinecraft()));

@@ -1,7 +1,11 @@
 package com.sixonethree.durabilityshow.proxy;
 
-public class ServerProxy extends CommonProxy {
-	@Override public void init() {
-		super.init();
+import net.minecraftforge.common.MinecraftForge;
+
+import com.sixonethree.durabilityshow.event.TooltipEvents;
+
+public class ServerProxy {
+	public void init() {
+		MinecraftForge.EVENT_BUS.register(new TooltipEvents());
 	}
 }
