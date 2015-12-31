@@ -20,21 +20,16 @@ apply plugin: 'maven'
 apply plugin: 'eclipse'
 
 ext.configFile = file('build.properties')
-
 ext.config = parseConfig(configFile)
 
-version = "1.8.8-2.1.0"
-group= "com.sixonethree.durabilityshow"
-archivesBaseName = "DurabilityShow"
+version = "${config.mc_version}-${config.mod_version_major}.${config.mod_version_minor}.${config.mod_version_build}"
+group= "${config.group}"
+archivesBaseName = "${config.archive_base}"
 
 minecraft {
-    version = "${config.mc_version}-${config.forge_version}-${config.mc_version}"
+    version = "${config.mc_version}-${config.forge_version}"
     runDir = "eclipse"
-    if (config.mappings == "today") {
-	    mappings = "snapshot_" + getDate()
-	} else {
-		mappings = "${config.mappings}"
-	}
+	mappings = "${config.mappings}"
 }
 
 repositories {
