@@ -9,11 +9,11 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.init.Items;
+import net.minecraft.item.ItemArrow;
 import net.minecraft.item.ItemBow;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -68,15 +68,27 @@ public class GuiItemDurability extends Gui {
 	}
 	
 	private int getArrowsInInventory() {
-		int Arrows = 0;
+		int arrows = 0;
 		for (ItemStack stack : minecraftInstance.thePlayer.inventory.mainInventory) {
 			if (stack != null) {
-				if (stack.getItem() == Items.arrow) {
-					Arrows += stack.stackSize;
+				if (stack.getItem() instanceof ItemArrow) {
+					arrows += stack.stackSize;
 				}
 			}
 		}
-		return Arrows;
+		return arrows;
+	}
+	
+	private ItemStack getArrowToDraw() {
+		if (getArrowsInInventory() > 0) {
+			for (int i = 0; i < minecraftInstance.thePlayer.inventory.getSizeInventory(); i ++) {
+				ItemStack stack = minecraftInstance.thePlayer.inventory.getStackInSlot(i);
+				if (stack != null) {
+					if (stack.getItem() instanceof ItemArrow) return stack;
+				}
+			}
+		}
+		return null;
 	}
 	
 	public boolean allNull(ItemStack... stacks) {
@@ -103,6 +115,7 @@ public class GuiItemDurability extends Gui {
 		}
 		InventoryPlayer inventory = effectivePlayer.inventory;
 		ItemStack current = inventory.getCurrentItem();
+		ItemStack secondary = inventory.offHandInventory[0];
 		ItemStack boots = inventory.armorInventory[0];
 		ItemStack leggings = inventory.armorInventory[1];
 		ItemStack chestplate = inventory.armorInventory[2];
@@ -185,7 +198,7 @@ public class GuiItemDurability extends Gui {
 			int[] params2 = new int[] {width, height, 0, armorAllNull ? 1 : 0};
 			
 			if (corner.name().contains("RIGHT")) {
-				params2 = renderItem(current, params, 1);
+				params2 = renderItem(current, secondary, params, 1);
 				if (!armorAllNull) {
 					renderArmor(boots, BOOTS, params2, 2);
 					renderArmor(leggings, LEGGINGS, params2, 2);
@@ -226,7 +239,7 @@ public class GuiItemDurability extends Gui {
 						renderArmor(helmet, HELMET, params, 1);
 					}
 				}
-				renderItem(current, params2, 2);
+				renderItem(current, secondary, params2, 2);
 			}
 			
 			RenderHelper.disableStandardItemLighting();
@@ -237,7 +250,7 @@ public class GuiItemDurability extends Gui {
 		itemRender.renderItemAndEffectIntoGUI(stack, x, y);
 	}
 	
-	private int[] renderItem(ItemStack stack, int[] params, int turn) {
+	private int[] renderItem(ItemStack mainHand, ItemStack offHand, int[] params, int turn) {
 		int width = params[0];
 		int height = params[1];
 		boolean armorAllNull = params[3] == 1 ? true : false;
@@ -246,33 +259,86 @@ public class GuiItemDurability extends Gui {
 		retStatement[1] = params[1];
 		retStatement[2] = params[2];
 		retStatement[3] = params[3];
-		if (stack != null) {
-			if (stack.isItemStackDamageable()) {
-				int x = corner.name().contains("LEFT") ? params[2] - (armorAllNull ? offsetPosition : 0) : width - 20;
-				int y = corner.name().contains("TOP") ? !armorAllNull ? 16 : 0 : (armorAllNull ? height - 16 : height - 48);
-				int y2 = corner.name().contains("BOTTOM") ? y - 16 : y + 16;
-				String damage = String.valueOf(stack.getMaxDamage() - stack.getItemDamage());
-				if (stack.hasTagCompound()) {
-					if (stack.getTagCompound().hasKey("InfiTool")) damage = "";
+
+		ItemStack firstStack = null;
+		ItemStack secondStack = null;
+		if (mainHand == null && offHand == null) return retStatement;
+		if (mainHand == null) {
+			if (offHand.isItemStackDamageable()) firstStack = offHand;
+		} else {
+			if (mainHand.isItemStackDamageable()) {
+				firstStack = mainHand;
+				if (offHand != null) {
+					if (offHand.isItemStackDamageable()) secondStack = offHand;
 				}
+			} else {
+				if (offHand.isItemStackDamageable()) firstStack = offHand;
+			}
+		}
+		
+		boolean mainBow = firstStack.getItem() instanceof ItemBow;
+		boolean secondaryBow = secondStack != null ? secondStack.getItem() instanceof ItemBow : false;
+		
+		int itemX = corner.name().contains("LEFT") ? params[2] - (armorAllNull ? offsetPosition : 0) : width - 20;
+		int mainHandY = corner.name().contains("TOP") ? !armorAllNull ? 16 : 0 : (armorAllNull ? height - 16 : height - 48);
+		int arrowY = mainHandY + 16;
+		int offHandY = mainHandY + ((mainBow || secondaryBow) && (getArrowsInInventory() > 0) ? 32 : 16);
+		
+		String mainDamage = String.valueOf(firstStack.getMaxDamage() - firstStack.getItemDamage());
+		int damageStringWidth = fontRenderer.getStringWidth(mainDamage) + 2;
+		renderItemAndEffectIntoGUI(firstStack, itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), mainHandY);
+		if (firstStack.getItem() instanceof ItemBow) {
+			int arrows = getArrowsInInventory();
+			if (arrows > 0) {
+				renderItemAndEffectIntoGUI(getArrowToDraw(), itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), arrowY);
+				fontRenderer.drawString(String.valueOf(arrows), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, arrowY + (fontRenderer.FONT_HEIGHT / 2), color_white);
+			}
+		}
+		fontRenderer.drawString(String.valueOf(mainDamage), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, mainHandY + (fontRenderer.FONT_HEIGHT / 2), color_white);
+		if (secondStack != null) {
+			String offHandDamage = String.valueOf(secondStack.getMaxDamage() - secondStack.getItemDamage());
+			damageStringWidth = Math.max(damageStringWidth, fontRenderer.getStringWidth(offHandDamage) + 2);
+			renderItemAndEffectIntoGUI(secondStack, itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), offHandY);
+			if (secondStack.getItem() instanceof ItemBow && (!(firstStack.getItem() instanceof ItemBow))) {
+				int arrows = getArrowsInInventory();
+				if (arrows > 0) {
+					renderItemAndEffectIntoGUI(getArrowToDraw(), itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), arrowY);
+					fontRenderer.drawString(String.valueOf(arrows), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, arrowY + (fontRenderer.FONT_HEIGHT / 2), color_white);
+				}
+			}
+			fontRenderer.drawString(String.valueOf(offHandDamage), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, offHandY + (fontRenderer.FONT_HEIGHT / 2), color_white);
+		}
+		
+		retStatement[2] = damageStringWidth + 34;
+		if (turn == 1 && armorAllNull) setCloseSize(18 + damageStringWidth);
+		if (turn == 2 && armorAllNull) setCloseSize(18 + damageStringWidth);
+		if (turn == 2 && !armorAllNull) setCloseSize(fontRenderer.getStringWidth("9999") + 36 + damageStringWidth);
+
+		/*// OLD
+		if (mainHand != null) {
+			if (mainHand.isItemStackDamageable()) {
+				int x = corner.name().contains("LEFT") ? params[2] - (armorAllNull ? offsetPosition : 0) : width - 20;
+				int itemY = corner.name().contains("TOP") ? !armorAllNull ? 16 : 0 : (armorAllNull ? height - 16 : height - 48);
+				int arrowY = corner.name().contains("BOTTOM") ? itemY - 16 : itemY + 16;
+				String damage = String.valueOf(mainHand.getMaxDamage() - mainHand.getItemDamage());
 				int damageStringWidth = fontRenderer.getStringWidth(damage) + 2;
-				renderItemAndEffectIntoGUI(stack, x - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), y);
-				if (stack.getItem() instanceof ItemBow) {
+				renderItemAndEffectIntoGUI(mainHand, x - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), itemY);
+				if (mainHand.getItem() instanceof ItemBow) {
 					int arrows = getArrowsInInventory();
 					if (arrows > 0) {
-						renderItemAndEffectIntoGUI(new ItemStack(Items.arrow), x - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), y2);
-						fontRenderer.drawString(String.valueOf(arrows), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, y2 + (fontRenderer.FONT_HEIGHT / 2), color_white);
+						renderItemAndEffectIntoGUI(getArrowToDraw(), x - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), arrowY);
+						fontRenderer.drawString(String.valueOf(arrows), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, arrowY + (fontRenderer.FONT_HEIGHT / 2), color_white);
 					}
-					fontRenderer.drawString(String.valueOf(damage), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, y + (fontRenderer.FONT_HEIGHT / 2), color_white);
+					fontRenderer.drawString(String.valueOf(damage), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, itemY + (fontRenderer.FONT_HEIGHT / 2), color_white);
 				} else {
-					fontRenderer.drawString(String.valueOf(damage), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, y + (fontRenderer.FONT_HEIGHT / 2), color_white);
+					fontRenderer.drawString(String.valueOf(damage), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, itemY + (fontRenderer.FONT_HEIGHT / 2), color_white);
 				}
 				retStatement[2] = damageStringWidth + 34;
 				if (turn == 1 && armorAllNull) setCloseSize(18 + damageStringWidth);
 				if (turn == 2 && armorAllNull) setCloseSize(18 + damageStringWidth);
 				if (turn == 2 && !armorAllNull) setCloseSize(fontRenderer.getStringWidth("9999") + 36 + damageStringWidth);
 			}
-		}
+		}*/
 		return retStatement;
 	}
 	

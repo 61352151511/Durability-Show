@@ -1,7 +1,7 @@
 package com.sixonethree.durabilityshow.event;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -13,7 +13,7 @@ public class TooltipEvents {
 			if (event.itemStack != null) {
 				ItemStack itemStack = event.itemStack;
 				if (itemStack.isItemDamaged()) {
-					String toolTip = ConfigurationHandler.getTooltipColor() + StatCollector.translateToLocalFormatted("tooltip.durabilitytooltip", (itemStack.getMaxDamage() - itemStack.getItemDamage()), itemStack.getMaxDamage());
+					String toolTip = ConfigurationHandler.getTooltipColor() + I18n.translateToLocalFormatted("tooltip.durabilitytooltip", (itemStack.getMaxDamage() - itemStack.getItemDamage()), itemStack.getMaxDamage());
 					if (!event.toolTip.contains(toolTip)) {
 						event.toolTip.add(toolTip);
 					}
