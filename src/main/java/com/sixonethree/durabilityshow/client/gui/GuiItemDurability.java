@@ -272,9 +272,13 @@ public class GuiItemDurability extends Gui {
 					if (offHand.isItemStackDamageable()) secondStack = offHand;
 				}
 			} else {
-				if (offHand.isItemStackDamageable()) firstStack = offHand;
+				if (offHand != null) {
+					if (offHand.isItemStackDamageable()) firstStack = offHand;
+				}
 			}
 		}
+		
+		if (firstStack == null && secondStack == null) return retStatement;
 		
 		boolean mainBow = firstStack.getItem() instanceof ItemBow;
 		boolean secondaryBow = secondStack != null ? secondStack.getItem() instanceof ItemBow : false;
