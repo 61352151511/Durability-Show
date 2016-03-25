@@ -16,6 +16,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemArrow;
 import net.minecraft.item.ItemBow;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -80,15 +81,21 @@ public class GuiItemDurability extends Gui {
 	}
 	
 	private ItemStack getArrowToDraw() {
-		if (getArrowsInInventory() > 0) {
+		if (this.isArrow(minecraftInstance.thePlayer.getHeldItem(EnumHand.OFF_HAND))) {
+			return minecraftInstance.thePlayer.getHeldItem(EnumHand.OFF_HAND);
+		} else if (this.isArrow(minecraftInstance.thePlayer.getHeldItem(EnumHand.MAIN_HAND))) {
+			return minecraftInstance.thePlayer.getHeldItem(EnumHand.MAIN_HAND);
+		} else {
 			for (int i = 0; i < minecraftInstance.thePlayer.inventory.getSizeInventory(); i ++) {
-				ItemStack stack = minecraftInstance.thePlayer.inventory.getStackInSlot(i);
-				if (stack != null) {
-					if (stack.getItem() instanceof ItemArrow) return stack;
-				}
+				ItemStack itemstack = minecraftInstance.thePlayer.inventory.getStackInSlot(i);
+				if (this.isArrow(itemstack)) { return itemstack; }
 			}
+			return null;
 		}
-		return null;
+	}
+	
+	protected boolean isArrow(ItemStack stack) {
+		return stack != null && stack.getItem() instanceof ItemArrow;
 	}
 	
 	public boolean allNull(ItemStack... stacks) {
@@ -125,7 +132,7 @@ public class GuiItemDurability extends Gui {
 			allNull(current, boots, leggings, chestplate, helmet) ||
 			minecraftInstance.thePlayer.capabilities.isCreativeMode ||
 			noSpec ||
-			event.type != ElementType.EXPERIENCE) return;
+			event.getType() != ElementType.EXPERIENCE) return;
 		
 		/* Compare to last armor set */
 		

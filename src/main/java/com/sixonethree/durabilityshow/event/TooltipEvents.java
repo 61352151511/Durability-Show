@@ -9,13 +9,13 @@ import com.sixonethree.durabilityshow.handler.ConfigurationHandler;
 
 public class TooltipEvents {
 	@SubscribeEvent public void onItemTooltip(ItemTooltipEvent event) {
-		if (!event.showAdvancedItemTooltips) {
-			if (event.itemStack != null) {
-				ItemStack itemStack = event.itemStack;
+		if (!event.isShowAdvancedItemTooltips()) {
+			if (event.getItemStack() != null) {
+				ItemStack itemStack = event.getItemStack();
 				if (itemStack.isItemDamaged()) {
 					String toolTip = ConfigurationHandler.getTooltipColor() + I18n.translateToLocalFormatted("tooltip.durabilitytooltip", (itemStack.getMaxDamage() - itemStack.getItemDamage()), itemStack.getMaxDamage());
-					if (!event.toolTip.contains(toolTip)) {
-						event.toolTip.add(toolTip);
+					if (!event.getToolTip().contains(toolTip)) {
+						event.getToolTip().add(toolTip);
 					}
 				}
 			}
