@@ -11,12 +11,15 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemArrow;
 import net.minecraft.item.ItemBow;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.RayTraceResult.Type;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -120,13 +123,26 @@ public class GuiItemDurability extends Gui {
 				noSpec = true;
 			}
 		}
-		InventoryPlayer inventory = effectivePlayer.inventory;
-		ItemStack current = inventory.getCurrentItem();
-		ItemStack secondary = inventory.offHandInventory[0];
-		ItemStack boots = inventory.armorInventory[0];
-		ItemStack leggings = inventory.armorInventory[1];
-		ItemStack chestplate = inventory.armorInventory[2];
-		ItemStack helmet = inventory.armorInventory[3];
+		
+		ItemStack current = effectivePlayer.getItemStackFromSlot(EntityEquipmentSlot.MAINHAND);
+		ItemStack secondary = effectivePlayer.getItemStackFromSlot(EntityEquipmentSlot.OFFHAND);
+		ItemStack boots = effectivePlayer.getItemStackFromSlot(EntityEquipmentSlot.FEET);
+		ItemStack leggings = effectivePlayer.getItemStackFromSlot(EntityEquipmentSlot.LEGS);
+		ItemStack chestplate = effectivePlayer.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+		ItemStack helmet = effectivePlayer.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
+		
+		RayTraceResult rayTraceResult = minecraftInstance.objectMouseOver;
+		if (rayTraceResult.typeOfHit == Type.ENTITY) {
+			if (rayTraceResult.entityHit instanceof EntityArmorStand) {
+				EntityArmorStand stand = (EntityArmorStand) rayTraceResult.entityHit;
+				current = stand.getItemStackFromSlot(EntityEquipmentSlot.MAINHAND);
+				secondary = stand.getItemStackFromSlot(EntityEquipmentSlot.OFFHAND);
+				boots = stand.getItemStackFromSlot(EntityEquipmentSlot.FEET);
+				leggings = stand.getItemStackFromSlot(EntityEquipmentSlot.LEGS);
+				chestplate = stand.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+				helmet = stand.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
+			}
+		}
 		
 		if (event.isCanceled() ||
 			allNull(current, boots, leggings, chestplate, helmet) ||
