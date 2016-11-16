@@ -73,10 +73,10 @@ public class GuiItemDurability extends Gui {
 	
 	private int getArrowsInInventory() {
 		int arrows = 0;
-		for (ItemStack stack : minecraftInstance.thePlayer.inventory.mainInventory) {
-			if (stack != null) {
+		for (ItemStack stack : minecraftInstance.player.inventory.mainInventory) {
+			if (!stack.func_190926_b()) {
 				if (stack.getItem() instanceof ItemArrow) {
-					arrows += stack.stackSize;
+					arrows += stack.func_190916_E();
 				}
 			}
 		}
@@ -84,13 +84,13 @@ public class GuiItemDurability extends Gui {
 	}
 	
 	private ItemStack getArrowToDraw() {
-		if (this.isArrow(minecraftInstance.thePlayer.getHeldItem(EnumHand.OFF_HAND))) {
-			return minecraftInstance.thePlayer.getHeldItem(EnumHand.OFF_HAND);
-		} else if (this.isArrow(minecraftInstance.thePlayer.getHeldItem(EnumHand.MAIN_HAND))) {
-			return minecraftInstance.thePlayer.getHeldItem(EnumHand.MAIN_HAND);
+		if (this.isArrow(minecraftInstance.player.getHeldItem(EnumHand.OFF_HAND))) {
+			return minecraftInstance.player.getHeldItem(EnumHand.OFF_HAND);
+		} else if (this.isArrow(minecraftInstance.player.getHeldItem(EnumHand.MAIN_HAND))) {
+			return minecraftInstance.player.getHeldItem(EnumHand.MAIN_HAND);
 		} else {
-			for (int i = 0; i < minecraftInstance.thePlayer.inventory.getSizeInventory(); i ++) {
-				ItemStack itemstack = minecraftInstance.thePlayer.inventory.getStackInSlot(i);
+			for (int i = 0; i < minecraftInstance.player.inventory.getSizeInventory(); i ++) {
+				ItemStack itemstack = minecraftInstance.player.inventory.getStackInSlot(i);
 				if (this.isArrow(itemstack)) { return itemstack; }
 			}
 			return null;
@@ -98,20 +98,20 @@ public class GuiItemDurability extends Gui {
 	}
 	
 	protected boolean isArrow(ItemStack stack) {
-		return stack != null && stack.getItem() instanceof ItemArrow;
+		return !stack.func_190926_b() && stack.getItem() instanceof ItemArrow;
 	}
 	
 	public boolean allNull(ItemStack... stacks) {
 		for (ItemStack s : stacks) {
-			if (s != null) return false;
+			if (!s.func_190926_b()) return false;
 		}
 		return true;
 	}
 	
 	@SubscribeEvent(priority = EventPriority.NORMAL) public void onRender(RenderGameOverlayEvent.Post event) {
-		EntityPlayer effectivePlayer = minecraftInstance.thePlayer;
+		EntityPlayer effectivePlayer = minecraftInstance.player;
 		boolean noSpec = false;
-		if (minecraftInstance.thePlayer.isSpectator()) {
+		if (minecraftInstance.player.isSpectator()) {
 			Entity spec = minecraftInstance.getRenderViewEntity();
 			if (spec != null) {
 				if (spec instanceof EntityPlayer) {
@@ -146,7 +146,7 @@ public class GuiItemDurability extends Gui {
 		
 		if (event.isCanceled() ||
 			allNull(current, boots, leggings, chestplate, helmet) ||
-			minecraftInstance.thePlayer.capabilities.isCreativeMode ||
+			minecraftInstance.player.capabilities.isCreativeMode ||
 			noSpec ||
 			event.getType() != ElementType.EXPERIENCE) return;
 		
@@ -161,19 +161,19 @@ public class GuiItemDurability extends Gui {
 		Integer curLeggingsDur = 0;
 		Integer curBootsDur = 0;
 		
-		if (helmet != null) {
+		if (!helmet.func_190926_b()) {
 			curHelmetName = helmet.getUnlocalizedName();
 			curHelmetDur = helmet.getItemDamage();
 		}
-		if (chestplate != null) {
+		if (!chestplate.func_190926_b()) {
 			curChestplateName = chestplate.getUnlocalizedName();
 			curChestplateDur = chestplate.getItemDamage();
 		}
-		if (leggings != null) {
+		if (!leggings.func_190926_b()) {
 			curLeggingsName = leggings.getUnlocalizedName();
 			curLeggingsDur = leggings.getItemDamage();
 		}
-		if (boots != null) {
+		if (!boots.func_190926_b()) {
 			curBootsName = boots.getUnlocalizedName();
 			curBootsDur = boots.getItemDamage();
 		}
@@ -230,7 +230,7 @@ public class GuiItemDurability extends Gui {
 				}
 			} else {
 				boolean params2gotten = false;
-				if (boots != null) {
+				if (!boots.func_190926_b()) {
 					if (!params2gotten) {
 						params2 = renderArmor(boots, BOOTS, params, 1);
 						params2gotten = true;
@@ -238,7 +238,7 @@ public class GuiItemDurability extends Gui {
 						renderArmor(boots, BOOTS, params, 1);
 					}
 				}
-				if (leggings != null) {
+				if (!leggings.func_190926_b()) {
 					if (!params2gotten) {
 						params2 = renderArmor(leggings, LEGGINGS, params, 1);
 						params2gotten = true;
@@ -246,7 +246,7 @@ public class GuiItemDurability extends Gui {
 						renderArmor(leggings, LEGGINGS, params, 1);
 					}
 				}
-				if (chestplate != null) {
+				if (!chestplate.func_190926_b()) {
 					if (!params2gotten) {
 						params2 = renderArmor(chestplate, CHESTPLATE, params, 1);
 						params2gotten = true;
@@ -254,7 +254,7 @@ public class GuiItemDurability extends Gui {
 						renderArmor(chestplate, CHESTPLATE, params, 1);
 					}
 				}
-				if (helmet != null) {
+				if (!helmet.func_190926_b()) {
 					if (!params2gotten) {
 						params2 = renderArmor(helmet, HELMET, params, 1);
 						params2gotten = true;
@@ -283,28 +283,28 @@ public class GuiItemDurability extends Gui {
 		retStatement[2] = params[2];
 		retStatement[3] = params[3];
 
-		ItemStack firstStack = null;
-		ItemStack secondStack = null;
-		if (mainHand == null && offHand == null) return retStatement;
-		if (mainHand == null) {
+		ItemStack firstStack = ItemStack.field_190927_a;
+		ItemStack secondStack = ItemStack.field_190927_a;
+		if (mainHand.func_190926_b() && offHand.func_190926_b()) return retStatement;
+		if (mainHand.func_190926_b()) {
 			if (offHand.isItemStackDamageable()) firstStack = offHand;
 		} else {
 			if (mainHand.isItemStackDamageable()) {
 				firstStack = mainHand;
-				if (offHand != null) {
+				if (!offHand.func_190926_b()) {
 					if (offHand.isItemStackDamageable()) secondStack = offHand;
 				}
 			} else {
-				if (offHand != null) {
+				if (!offHand.func_190926_b()) {
 					if (offHand.isItemStackDamageable()) firstStack = offHand;
 				}
 			}
 		}
 		
-		if (firstStack == null && secondStack == null) return retStatement;
+		if (firstStack.func_190926_b() && secondStack.func_190926_b()) return retStatement;
 		
 		boolean mainBow = firstStack.getItem() instanceof ItemBow;
-		boolean secondaryBow = secondStack != null ? secondStack.getItem() instanceof ItemBow : false;
+		boolean secondaryBow = !secondStack.func_190926_b() ? secondStack.getItem() instanceof ItemBow : false;
 		
 		int itemX = corner.name().contains("LEFT") ? params[2] - (armorAllNull ? offsetPosition : 0) : width - 20;
 		int mainHandY = corner.name().contains("TOP") ? !armorAllNull ? 16 : 0 : (armorAllNull ? height - 16 : height - 48);
@@ -322,7 +322,7 @@ public class GuiItemDurability extends Gui {
 			}
 		}
 		fontRenderer.drawString(String.valueOf(mainDamage), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, mainHandY + (fontRenderer.FONT_HEIGHT / 2), color_white);
-		if (secondStack != null) {
+		if (!secondStack.func_190926_b()) {
 			String offHandDamage = String.valueOf(secondStack.getMaxDamage() - secondStack.getItemDamage());
 			damageStringWidth = Math.max(damageStringWidth, fontRenderer.getStringWidth(offHandDamage) + 2);
 			renderItemAndEffectIntoGUI(secondStack, itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), offHandY);
@@ -340,32 +340,7 @@ public class GuiItemDurability extends Gui {
 		if (turn == 1 && armorAllNull) setCloseSize(18 + damageStringWidth);
 		if (turn == 2 && armorAllNull) setCloseSize(18 + damageStringWidth);
 		if (turn == 2 && !armorAllNull) setCloseSize(fontRenderer.getStringWidth("9999") + 36 + damageStringWidth);
-
-		/*// OLD
-		if (mainHand != null) {
-			if (mainHand.isItemStackDamageable()) {
-				int x = corner.name().contains("LEFT") ? params[2] - (armorAllNull ? offsetPosition : 0) : width - 20;
-				int itemY = corner.name().contains("TOP") ? !armorAllNull ? 16 : 0 : (armorAllNull ? height - 16 : height - 48);
-				int arrowY = corner.name().contains("BOTTOM") ? itemY - 16 : itemY + 16;
-				String damage = String.valueOf(mainHand.getMaxDamage() - mainHand.getItemDamage());
-				int damageStringWidth = fontRenderer.getStringWidth(damage) + 2;
-				renderItemAndEffectIntoGUI(mainHand, x - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), itemY);
-				if (mainHand.getItem() instanceof ItemBow) {
-					int arrows = getArrowsInInventory();
-					if (arrows > 0) {
-						renderItemAndEffectIntoGUI(getArrowToDraw(), x - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), arrowY);
-						fontRenderer.drawString(String.valueOf(arrows), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, arrowY + (fontRenderer.FONT_HEIGHT / 2), color_white);
-					}
-					fontRenderer.drawString(String.valueOf(damage), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, itemY + (fontRenderer.FONT_HEIGHT / 2), color_white);
-				} else {
-					fontRenderer.drawString(String.valueOf(damage), corner.name().contains("RIGHT") ? (x - damageStringWidth + 18) : x + 18, itemY + (fontRenderer.FONT_HEIGHT / 2), color_white);
-				}
-				retStatement[2] = damageStringWidth + 34;
-				if (turn == 1 && armorAllNull) setCloseSize(18 + damageStringWidth);
-				if (turn == 2 && armorAllNull) setCloseSize(18 + damageStringWidth);
-				if (turn == 2 && !armorAllNull) setCloseSize(fontRenderer.getStringWidth("9999") + 36 + damageStringWidth);
-			}
-		}*/
+		
 		return retStatement;
 	}
 	
@@ -377,7 +352,7 @@ public class GuiItemDurability extends Gui {
 		retStatement[0] = params[0];
 		retStatement[1] = params[1];
 		retStatement[3] = params[3];
-		if (stack != null) {
+		if (!stack.func_190926_b()) {
 			int x = (corner.name().contains("LEFT")) ? 0 + (armorOffset - 16) - offsetPosition : width - armorOffset;
 			int y = (corner.name().contains("TOP")) ? (4 - type) * 16 : height - (16 * type);
 			String damage = String.valueOf(stack.getMaxDamage() - stack.getItemDamage());
