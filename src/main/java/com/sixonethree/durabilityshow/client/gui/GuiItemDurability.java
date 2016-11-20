@@ -74,9 +74,9 @@ public class GuiItemDurability extends Gui {
 	private int getArrowsInInventory() {
 		int arrows = 0;
 		for (ItemStack stack : minecraftInstance.player.inventory.mainInventory) {
-			if (!stack.func_190926_b()) {
+			if (!stack.isEmpty()) {
 				if (stack.getItem() instanceof ItemArrow) {
-					arrows += stack.func_190916_E();
+					arrows += stack.getCount();
 				}
 			}
 		}
@@ -98,12 +98,12 @@ public class GuiItemDurability extends Gui {
 	}
 	
 	protected boolean isArrow(ItemStack stack) {
-		return !stack.func_190926_b() && stack.getItem() instanceof ItemArrow;
+		return !stack.isEmpty() && stack.getItem() instanceof ItemArrow;
 	}
 	
 	public boolean allNull(ItemStack... stacks) {
 		for (ItemStack s : stacks) {
-			if (!s.func_190926_b()) return false;
+			if (!s.isEmpty()) return false;
 		}
 		return true;
 	}
@@ -132,7 +132,7 @@ public class GuiItemDurability extends Gui {
 		ItemStack helmet = effectivePlayer.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
 		
 		RayTraceResult rayTraceResult = minecraftInstance.objectMouseOver;
-		if (rayTraceResult.typeOfHit == Type.ENTITY) {
+		if (rayTraceResult != null && rayTraceResult.typeOfHit != null && rayTraceResult.typeOfHit == Type.ENTITY) {
 			if (rayTraceResult.entityHit instanceof EntityArmorStand) {
 				EntityArmorStand stand = (EntityArmorStand) rayTraceResult.entityHit;
 				current = stand.getItemStackFromSlot(EntityEquipmentSlot.MAINHAND);
@@ -161,19 +161,19 @@ public class GuiItemDurability extends Gui {
 		Integer curLeggingsDur = 0;
 		Integer curBootsDur = 0;
 		
-		if (!helmet.func_190926_b()) {
+		if (!helmet.isEmpty()) {
 			curHelmetName = helmet.getUnlocalizedName();
 			curHelmetDur = helmet.getItemDamage();
 		}
-		if (!chestplate.func_190926_b()) {
+		if (!chestplate.isEmpty()) {
 			curChestplateName = chestplate.getUnlocalizedName();
 			curChestplateDur = chestplate.getItemDamage();
 		}
-		if (!leggings.func_190926_b()) {
+		if (!leggings.isEmpty()) {
 			curLeggingsName = leggings.getUnlocalizedName();
 			curLeggingsDur = leggings.getItemDamage();
 		}
-		if (!boots.func_190926_b()) {
+		if (!boots.isEmpty()) {
 			curBootsName = boots.getUnlocalizedName();
 			curBootsDur = boots.getItemDamage();
 		}
@@ -230,7 +230,7 @@ public class GuiItemDurability extends Gui {
 				}
 			} else {
 				boolean params2gotten = false;
-				if (!boots.func_190926_b()) {
+				if (!boots.isEmpty()) {
 					if (!params2gotten) {
 						params2 = renderArmor(boots, BOOTS, params, 1);
 						params2gotten = true;
@@ -238,7 +238,7 @@ public class GuiItemDurability extends Gui {
 						renderArmor(boots, BOOTS, params, 1);
 					}
 				}
-				if (!leggings.func_190926_b()) {
+				if (!leggings.isEmpty()) {
 					if (!params2gotten) {
 						params2 = renderArmor(leggings, LEGGINGS, params, 1);
 						params2gotten = true;
@@ -246,7 +246,7 @@ public class GuiItemDurability extends Gui {
 						renderArmor(leggings, LEGGINGS, params, 1);
 					}
 				}
-				if (!chestplate.func_190926_b()) {
+				if (!chestplate.isEmpty()) {
 					if (!params2gotten) {
 						params2 = renderArmor(chestplate, CHESTPLATE, params, 1);
 						params2gotten = true;
@@ -254,7 +254,7 @@ public class GuiItemDurability extends Gui {
 						renderArmor(chestplate, CHESTPLATE, params, 1);
 					}
 				}
-				if (!helmet.func_190926_b()) {
+				if (!helmet.isEmpty()) {
 					if (!params2gotten) {
 						params2 = renderArmor(helmet, HELMET, params, 1);
 						params2gotten = true;
@@ -283,28 +283,28 @@ public class GuiItemDurability extends Gui {
 		retStatement[2] = params[2];
 		retStatement[3] = params[3];
 
-		ItemStack firstStack = ItemStack.field_190927_a;
-		ItemStack secondStack = ItemStack.field_190927_a;
-		if (mainHand.func_190926_b() && offHand.func_190926_b()) return retStatement;
-		if (mainHand.func_190926_b()) {
+		ItemStack firstStack = ItemStack.EMPTY;
+		ItemStack secondStack = ItemStack.EMPTY;
+		if (mainHand.isEmpty() && offHand.isEmpty()) return retStatement;
+		if (mainHand.isEmpty()) {
 			if (offHand.isItemStackDamageable()) firstStack = offHand;
 		} else {
 			if (mainHand.isItemStackDamageable()) {
 				firstStack = mainHand;
-				if (!offHand.func_190926_b()) {
+				if (!offHand.isEmpty()) {
 					if (offHand.isItemStackDamageable()) secondStack = offHand;
 				}
 			} else {
-				if (!offHand.func_190926_b()) {
+				if (!offHand.isEmpty()) {
 					if (offHand.isItemStackDamageable()) firstStack = offHand;
 				}
 			}
 		}
 		
-		if (firstStack.func_190926_b() && secondStack.func_190926_b()) return retStatement;
+		if (firstStack.isEmpty() && secondStack.isEmpty()) return retStatement;
 		
 		boolean mainBow = firstStack.getItem() instanceof ItemBow;
-		boolean secondaryBow = !secondStack.func_190926_b() ? secondStack.getItem() instanceof ItemBow : false;
+		boolean secondaryBow = !secondStack.isEmpty() ? secondStack.getItem() instanceof ItemBow : false;
 		
 		int itemX = corner.name().contains("LEFT") ? params[2] - (armorAllNull ? offsetPosition : 0) : width - 20;
 		int mainHandY = corner.name().contains("TOP") ? !armorAllNull ? 16 : 0 : (armorAllNull ? height - 16 : height - 48);
@@ -322,7 +322,7 @@ public class GuiItemDurability extends Gui {
 			}
 		}
 		fontRenderer.drawString(String.valueOf(mainDamage), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, mainHandY + (fontRenderer.FONT_HEIGHT / 2), color_white);
-		if (!secondStack.func_190926_b()) {
+		if (!secondStack.isEmpty()) {
 			String offHandDamage = String.valueOf(secondStack.getMaxDamage() - secondStack.getItemDamage());
 			damageStringWidth = Math.max(damageStringWidth, fontRenderer.getStringWidth(offHandDamage) + 2);
 			renderItemAndEffectIntoGUI(secondStack, itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), offHandY);
@@ -352,7 +352,7 @@ public class GuiItemDurability extends Gui {
 		retStatement[0] = params[0];
 		retStatement[1] = params[1];
 		retStatement[3] = params[3];
-		if (!stack.func_190926_b()) {
+		if (!stack.isEmpty()) {
 			int x = (corner.name().contains("LEFT")) ? 0 + (armorOffset - 16) - offsetPosition : width - armorOffset;
 			int y = (corner.name().contains("TOP")) ? (4 - type) * 16 : height - (16 * type);
 			String damage = String.valueOf(stack.getMaxDamage() - stack.getItemDamage());
