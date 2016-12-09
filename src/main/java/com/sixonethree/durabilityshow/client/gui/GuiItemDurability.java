@@ -22,6 +22,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.RayTraceResult.Type;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -35,6 +36,7 @@ public class GuiItemDurability extends Gui {
 	private static FontRenderer fontRenderer;
 	private static RenderItem itemRender;
 	private static boolean renderCharacter = false;
+	private static boolean renderBaubles = false;
 	private static int overrideRenderCharacterTime = 0;
 	private static Object[][] lastArmorSet = new Object[][] {
 		new String[] {
@@ -63,6 +65,8 @@ public class GuiItemDurability extends Gui {
 	public static void decOverrideTime() { overrideRenderCharacterTime --; }
 	public static boolean getRenderCharacter() { return renderCharacter; }
 	public static void setRenderChararcter(boolean render) { renderCharacter = render; }
+	public static boolean getRenderBaubles() { return renderBaubles; }
+	public static void setRenderBaubles(boolean render) { renderBaubles = render; }
 	
 	public GuiItemDurability(Minecraft MC) {
 		super();
@@ -209,63 +213,90 @@ public class GuiItemDurability extends Gui {
 		if (renderCharacter && overrideRenderCharacterTime <= 0) {
 			renderCharacter(corner, 10, scaled, effectivePlayer);
 		} else {
-			int armorOffset = 16;
-			int width = scaled.getScaledWidth() + offsetPosition;
-			int height = scaled.getScaledHeight();
-			GlStateManager.color(1, 1, 1, 1);
-			RenderHelper.enableStandardItemLighting();
-			RenderHelper.enableGUIStandardItemLighting();
-			boolean armorAllNull = allNull(boots, leggings, chestplate, helmet);
-			
-			int[] params = new int[] {width, height, armorOffset, armorAllNull ? 1 : 0};
-			int[] params2 = new int[] {width, height, 0, armorAllNull ? 1 : 0};
-			
-			if (corner.name().contains("RIGHT")) {
-				params2 = renderItem(current, secondary, params, 1);
-				if (!armorAllNull) {
-					renderArmor(boots, BOOTS, params2, 2);
-					renderArmor(leggings, LEGGINGS, params2, 2);
-					renderArmor(chestplate, CHESTPLATE, params2, 2);
-					renderArmor(helmet, HELMET, params2, 2);
-				}
+			if (renderBaubles && Loader.isModLoaded("baubles")) {
+				baubles.api.cap.IBaublesItemHandler handler = baubles.api.BaublesApi.getBaublesHandler(effectivePlayer);
+				ItemStack amulet = handler.getStackInSlot(0);
+				ItemStack ring1 = handler.getStackInSlot(1);
+				ItemStack ring2 = handler.getStackInSlot(2);
+				ItemStack belt = handler.getStackInSlot(3);
+				ItemStack head = handler.getStackInSlot(4);
+				ItemStack body = handler.getStackInSlot(5);
+				ItemStack charm = handler.getStackInSlot(6);
+				
+				int width = scaled.getScaledWidth() + offsetPosition;
+				int height = scaled.getScaledHeight();
+				GlStateManager.color(1, 1, 1, 1);
+				RenderHelper.enableStandardItemLighting();
+				RenderHelper.enableGUIStandardItemLighting();
+				
+				int baubleNumber = 0;
+				baubleNumber += renderBauble(amulet, baubleNumber, width, height);
+				baubleNumber += renderBauble(ring1, baubleNumber, width, height);
+				baubleNumber += renderBauble(ring2, baubleNumber, width, height);
+				baubleNumber += renderBauble(belt, baubleNumber, width, height);
+				baubleNumber += renderBauble(head, baubleNumber, width, height);
+				baubleNumber += renderBauble(body, baubleNumber, width, height);
+				baubleNumber += renderBauble(charm, baubleNumber, width, height);
+				
+				RenderHelper.disableStandardItemLighting();
 			} else {
-				boolean params2gotten = false;
-				if (!boots.isEmpty()) {
-					if (!params2gotten) {
-						params2 = renderArmor(boots, BOOTS, params, 1);
-						params2gotten = true;
-					} else {
-						renderArmor(boots, BOOTS, params, 1);
+				int armorOffset = 16;
+				int width = scaled.getScaledWidth() + offsetPosition;
+				int height = scaled.getScaledHeight();
+				GlStateManager.color(1, 1, 1, 1);
+				RenderHelper.enableStandardItemLighting();
+				RenderHelper.enableGUIStandardItemLighting();
+				boolean armorAllNull = allNull(boots, leggings, chestplate, helmet);
+				
+				int[] params = new int[] {width, height, armorOffset, armorAllNull ? 1 : 0};
+				int[] params2 = new int[] {width, height, 0, armorAllNull ? 1 : 0};
+				
+				if (corner.name().contains("RIGHT")) {
+					params2 = renderItem(current, secondary, params, 1);
+					if (!armorAllNull) {
+						renderArmor(boots, BOOTS, params2, 2);
+						renderArmor(leggings, LEGGINGS, params2, 2);
+						renderArmor(chestplate, CHESTPLATE, params2, 2);
+						renderArmor(helmet, HELMET, params2, 2);
 					}
-				}
-				if (!leggings.isEmpty()) {
-					if (!params2gotten) {
-						params2 = renderArmor(leggings, LEGGINGS, params, 1);
-						params2gotten = true;
-					} else {
-						renderArmor(leggings, LEGGINGS, params, 1);
+				} else {
+					boolean params2gotten = false;
+					if (!boots.isEmpty()) {
+						if (!params2gotten) {
+							params2 = renderArmor(boots, BOOTS, params, 1);
+							params2gotten = true;
+						} else {
+							renderArmor(boots, BOOTS, params, 1);
+						}
 					}
-				}
-				if (!chestplate.isEmpty()) {
-					if (!params2gotten) {
-						params2 = renderArmor(chestplate, CHESTPLATE, params, 1);
-						params2gotten = true;
-					} else {
-						renderArmor(chestplate, CHESTPLATE, params, 1);
+					if (!leggings.isEmpty()) {
+						if (!params2gotten) {
+							params2 = renderArmor(leggings, LEGGINGS, params, 1);
+							params2gotten = true;
+						} else {
+							renderArmor(leggings, LEGGINGS, params, 1);
+						}
 					}
-				}
-				if (!helmet.isEmpty()) {
-					if (!params2gotten) {
-						params2 = renderArmor(helmet, HELMET, params, 1);
-						params2gotten = true;
-					} else {
-						renderArmor(helmet, HELMET, params, 1);
+					if (!chestplate.isEmpty()) {
+						if (!params2gotten) {
+							params2 = renderArmor(chestplate, CHESTPLATE, params, 1);
+							params2gotten = true;
+						} else {
+							renderArmor(chestplate, CHESTPLATE, params, 1);
+						}
 					}
+					if (!helmet.isEmpty()) {
+						if (!params2gotten) {
+							params2 = renderArmor(helmet, HELMET, params, 1);
+							params2gotten = true;
+						} else {
+							renderArmor(helmet, HELMET, params, 1);
+						}
+					}
+					renderItem(current, secondary, params2, 2);
 				}
-				renderItem(current, secondary, params2, 2);
+				RenderHelper.disableStandardItemLighting();
 			}
-			
-			RenderHelper.disableStandardItemLighting();
 		}
 	}
 	
@@ -364,6 +395,20 @@ public class GuiItemDurability extends Gui {
 			if (turn == 2) setCloseSize(16 + damageStringWidth + armorOffset);
 		}
 		return retStatement;
+	}
+	
+	private int renderBauble(ItemStack stack, int baubleNumber, int width, int height) {
+		if (stack.isEmpty()) return 0;
+		if (!stack.isItemStackDamageable()) return 0;
+		
+		int x = (corner.name().contains("LEFT")) ? 0 - offsetPosition : width - 16;
+		int y = (corner.name().contains("TOP")) ? baubleNumber * 16 : height - (baubleNumber + 1) * 16;
+		String damage = String.valueOf(stack.getMaxDamage() - stack.getItemDamage());
+		renderItemAndEffectIntoGUI(stack, x, y);
+		int textX = x + (corner.name().contains("LEFT") ? 16 : -(fontRenderer.getStringWidth(damage)));
+		fontRenderer.drawString(damage, textX, y + (fontRenderer.FONT_HEIGHT / 2), color_white);
+		setCloseSize(fontRenderer.getStringWidth("9999") + 16);
+		return 1;
 	}
 	
 	private void renderCharacter(EnumCorner side, int xPos, ScaledResolution scaled, EntityPlayer effectivePlayer) {
