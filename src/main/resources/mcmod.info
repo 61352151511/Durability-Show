@@ -1,21 +1,16 @@
 [
 {
-  "modid": "DurabilityShow",
+  "modid": "durabilityshow",
   "name": "Durability Show",
   "description": "Shows durability of tools with advanced tooltips off.",
   "version": "4.1.0",
   "mcversion": "1.11.2",
   "url": "",
   "updateUrl": "",
-  "authorList": [
-    "Six-One-Three"
-  ],
-  "credits": "Six-One-Three",
+  "authorList": ["Six-One-Three"],
+  "credits": "Six-One-Three, thanks to NovaViper for fixing the mcmod.info file",
   "logoFile": "",
-  "screenshots": [
-  ],
-  "parent":"",
-  "dependencies": [
-  ]
+  "screenshots": [],
+  "dependencies": []
 }
 ]
