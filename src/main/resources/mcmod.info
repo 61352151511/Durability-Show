@@ -3,7 +3,7 @@
   "modid": "durabilityshow",
   "name": "Durability Show",
   "description": "Shows durability of tools with advanced tooltips off.",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "mcversion": "1.11.2",
   "url": "",
   "updateUrl": "",
