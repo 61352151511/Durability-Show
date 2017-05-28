@@ -1,10 +1,18 @@
 package com.sixonethree.durabilityshow.client.gui;
 
 import java.awt.Color;
+import java.util.Iterator;
+import java.util.List;
+
+import com.google.common.collect.Lists;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.ISound;
+import net.minecraft.client.audio.ISoundEventListener;
+import net.minecraft.client.audio.SoundEventAccessor;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiSubtitleOverlay;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
@@ -20,14 +28,17 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.RayTraceResult.Type;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-public class GuiItemDurability extends Gui {
+public class GuiItemDurability extends Gui implements ISoundEventListener {
 	private static Minecraft minecraftInstance;
+	private static List<GuiSubtitleOverlay.Subtitle> subtitles = Lists.<GuiSubtitleOverlay.Subtitle>newArrayList();
+	private static boolean subtitlesEnabled = false;
 	private static EnumGuiState guiState = EnumGuiState.OPEN;
 	private static EnumCorner corner = EnumCorner.BOTTOM_RIGHT;
 	private static int offsetPosition = 0;
@@ -55,7 +66,12 @@ public class GuiItemDurability extends Gui {
 	public static EnumGuiState getGuiState() { return guiState; }
 	public static int getOffset() { return offsetPosition; }
 	public static void setGuiState(EnumGuiState State) { guiState = State; }
-	public static EnumCorner getCorner() { return corner; }
+	
+	public static EnumCorner getCorner() {
+		if (corner == EnumCorner.BOTTOM_RIGHT && !subtitles.isEmpty() && subtitlesEnabled) return EnumCorner.BOTTOM_LEFT;
+		return corner;
+	}
+	
 	public static void setCorner(EnumCorner newCorner) { corner = newCorner; }
 	public static void lowerOffset() { offsetPosition --; }
 	public static void raiseOffset() { offsetPosition ++; }
@@ -71,7 +87,7 @@ public class GuiItemDurability extends Gui {
 	public GuiItemDurability(Minecraft MC) {
 		super();
 		minecraftInstance = MC;
-		fontRenderer = MC.fontRendererObj;
+		fontRenderer = MC.fontRenderer;
 		itemRender = MC.getRenderItem();
 	}
 	
@@ -113,6 +129,7 @@ public class GuiItemDurability extends Gui {
 	}
 	
 	@SubscribeEvent(priority = EventPriority.NORMAL) public void onRender(RenderGameOverlayEvent.Post event) {
+		updateSubtitles();
 		EntityPlayer effectivePlayer = minecraftInstance.player;
 		boolean noSpec = false;
 		if (minecraftInstance.player.isSpectator()) {
@@ -211,7 +228,7 @@ public class GuiItemDurability extends Gui {
 		ScaledResolution scaled = new ScaledResolution(minecraftInstance);
 		
 		if (renderCharacter && overrideRenderCharacterTime <= 0) {
-			renderCharacter(corner, 10, scaled, effectivePlayer);
+			renderCharacter(getCorner(), 10, scaled, effectivePlayer);
 		} else {
 			if (renderBaubles && Loader.isModLoaded("baubles")) {
 				baubles.api.cap.IBaublesItemHandler handler = baubles.api.BaublesApi.getBaublesHandler(effectivePlayer);
@@ -251,7 +268,7 @@ public class GuiItemDurability extends Gui {
 				int[] params = new int[] {width, height, armorOffset, armorAllNull ? 1 : 0};
 				int[] params2 = new int[] {width, height, 0, armorAllNull ? 1 : 0};
 				
-				if (corner.name().contains("RIGHT")) {
+				if (getCorner().name().contains("RIGHT")) {
 					params2 = renderItem(current, secondary, params, 1);
 					if (!armorAllNull) {
 						renderArmor(boots, BOOTS, params2, 2);
@@ -337,34 +354,34 @@ public class GuiItemDurability extends Gui {
 		boolean mainBow = firstStack.getItem() instanceof ItemBow;
 		boolean secondaryBow = !secondStack.isEmpty() ? secondStack.getItem() instanceof ItemBow : false;
 		
-		int itemX = corner.name().contains("LEFT") ? params[2] - (armorAllNull ? offsetPosition : 0) : width - 20;
-		int mainHandY = corner.name().contains("TOP") ? !armorAllNull ? 16 : 0 : (armorAllNull ? height - 16 : height - 48);
+		int itemX = getCorner().name().contains("LEFT") ? params[2] - (armorAllNull ? offsetPosition : 0) : width - 20;
+		int mainHandY = getCorner().name().contains("TOP") ? !armorAllNull ? 16 : 0 : (armorAllNull ? height - 16 : height - 48);
 		int arrowY = mainHandY + 16;
 		int offHandY = mainHandY + ((mainBow || secondaryBow) && (getArrowsInInventory() > 0) ? 32 : 16);
 		
 		String mainDamage = String.valueOf(firstStack.getMaxDamage() - firstStack.getItemDamage());
 		int damageStringWidth = fontRenderer.getStringWidth(mainDamage) + 2;
-		renderItemAndEffectIntoGUI(firstStack, itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), mainHandY);
+		renderItemAndEffectIntoGUI(firstStack, itemX - (getCorner().name().contains("LEFT") ? 0 : damageStringWidth - 2), mainHandY);
 		if (firstStack.getItem() instanceof ItemBow) {
 			int arrows = getArrowsInInventory();
 			if (arrows > 0) {
-				renderItemAndEffectIntoGUI(getArrowToDraw(), itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), arrowY);
-				fontRenderer.drawString(String.valueOf(arrows), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, arrowY + (fontRenderer.FONT_HEIGHT / 2), color_white);
+				renderItemAndEffectIntoGUI(getArrowToDraw(), itemX - (getCorner().name().contains("LEFT") ? 0 : damageStringWidth - 2), arrowY);
+				fontRenderer.drawString(String.valueOf(arrows), getCorner().name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, arrowY + (fontRenderer.FONT_HEIGHT / 2), color_white);
 			}
 		}
-		fontRenderer.drawString(String.valueOf(mainDamage), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, mainHandY + (fontRenderer.FONT_HEIGHT / 2), color_white);
+		fontRenderer.drawString(String.valueOf(mainDamage), getCorner().name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, mainHandY + (fontRenderer.FONT_HEIGHT / 2), color_white);
 		if (!secondStack.isEmpty()) {
 			String offHandDamage = String.valueOf(secondStack.getMaxDamage() - secondStack.getItemDamage());
 			damageStringWidth = Math.max(damageStringWidth, fontRenderer.getStringWidth(offHandDamage) + 2);
-			renderItemAndEffectIntoGUI(secondStack, itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), offHandY);
+			renderItemAndEffectIntoGUI(secondStack, itemX - (getCorner().name().contains("LEFT") ? 0 : damageStringWidth - 2), offHandY);
 			if (secondStack.getItem() instanceof ItemBow && (!(firstStack.getItem() instanceof ItemBow))) {
 				int arrows = getArrowsInInventory();
 				if (arrows > 0) {
-					renderItemAndEffectIntoGUI(getArrowToDraw(), itemX - (corner.name().contains("LEFT") ? 0 : damageStringWidth - 2), arrowY);
-					fontRenderer.drawString(String.valueOf(arrows), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, arrowY + (fontRenderer.FONT_HEIGHT / 2), color_white);
+					renderItemAndEffectIntoGUI(getArrowToDraw(), itemX - (getCorner().name().contains("LEFT") ? 0 : damageStringWidth - 2), arrowY);
+					fontRenderer.drawString(String.valueOf(arrows), getCorner().name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, arrowY + (fontRenderer.FONT_HEIGHT / 2), color_white);
 				}
 			}
-			fontRenderer.drawString(String.valueOf(offHandDamage), corner.name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, offHandY + (fontRenderer.FONT_HEIGHT / 2), color_white);
+			fontRenderer.drawString(String.valueOf(offHandDamage), getCorner().name().contains("RIGHT") ? (itemX - damageStringWidth + 18) : itemX + 18, offHandY + (fontRenderer.FONT_HEIGHT / 2), color_white);
 		}
 		
 		retStatement[2] = damageStringWidth + 34;
@@ -384,13 +401,13 @@ public class GuiItemDurability extends Gui {
 		retStatement[1] = params[1];
 		retStatement[3] = params[3];
 		if (!stack.isEmpty()) {
-			int x = (corner.name().contains("LEFT")) ? 0 + (armorOffset - 16) - offsetPosition : width - armorOffset;
-			int y = (corner.name().contains("TOP")) ? (4 - type) * 16 : height - (16 * type);
+			int x = (getCorner().name().contains("LEFT")) ? 0 + (armorOffset - 16) - offsetPosition : width - armorOffset;
+			int y = (getCorner().name().contains("TOP")) ? (4 - type) * 16 : height - (16 * type);
 			String damage = String.valueOf(stack.getMaxDamage() - stack.getItemDamage());
-			int damageStringWidth = corner.name().contains("LEFT") ? Math.max(fontRenderer.getStringWidth(damage) + 2, fontRenderer.getStringWidth("9999") + 2) : fontRenderer.getStringWidth(damage) + 2;
-			if (corner.name().contains("LEFT")) x += damageStringWidth;
+			int damageStringWidth = getCorner().name().contains("LEFT") ? Math.max(fontRenderer.getStringWidth(damage) + 2, fontRenderer.getStringWidth("9999") + 2) : fontRenderer.getStringWidth(damage) + 2;
+			if (getCorner().name().contains("LEFT")) x += damageStringWidth;
 			renderItemAndEffectIntoGUI(stack, x, y);
-			fontRenderer.drawString(String.valueOf(damage), x - (corner.name().contains("LEFT") ? (damageStringWidth - 2) : damageStringWidth), y + (fontRenderer.FONT_HEIGHT / 2), color_white);
+			fontRenderer.drawString(String.valueOf(damage), x - (getCorner().name().contains("LEFT") ? (damageStringWidth - 2) : damageStringWidth), y + (fontRenderer.FONT_HEIGHT / 2), color_white);
 			retStatement[2] = x + 18;
 			if (turn == 2) setCloseSize(16 + damageStringWidth + armorOffset);
 		}
@@ -401,11 +418,11 @@ public class GuiItemDurability extends Gui {
 		if (stack.isEmpty()) return 0;
 		if (!stack.isItemStackDamageable()) return 0;
 		
-		int x = (corner.name().contains("LEFT")) ? 0 - offsetPosition : width - 16;
-		int y = (corner.name().contains("TOP")) ? baubleNumber * 16 : height - (baubleNumber + 1) * 16;
+		int x = (getCorner().name().contains("LEFT")) ? 0 - offsetPosition : width - 16;
+		int y = (getCorner().name().contains("TOP")) ? baubleNumber * 16 : height - (baubleNumber + 1) * 16;
 		String damage = String.valueOf(stack.getMaxDamage() - stack.getItemDamage());
 		renderItemAndEffectIntoGUI(stack, x, y);
-		int textX = x + (corner.name().contains("LEFT") ? 16 : -(fontRenderer.getStringWidth(damage)));
+		int textX = x + (getCorner().name().contains("LEFT") ? 16 : -(fontRenderer.getStringWidth(damage)));
 		fontRenderer.drawString(damage, textX, y + (fontRenderer.FONT_HEIGHT / 2), color_white);
 		setCloseSize(fontRenderer.getStringWidth("9999") + 16);
 		return 1;
@@ -416,6 +433,49 @@ public class GuiItemDurability extends Gui {
 			GuiInventory.drawEntityOnScreen(xPos - offsetPosition, scaled.getScaledHeight(), xPos - (((xPos / 2) * -1) * 2), -50, - effectivePlayer.rotationPitch, effectivePlayer);
 		} else {
 			GuiInventory.drawEntityOnScreen((scaled.getScaledWidth() - xPos) + offsetPosition, scaled.getScaledHeight(), xPos - (((xPos / 2) * -1) * 2), 50, - effectivePlayer.rotationPitch, effectivePlayer);
+		}
+	}
+	
+	/* Subtitle Listening */
+	
+	private void updateSubtitles() {
+		if (!minecraftInstance.gameSettings.showSubtitles && !subtitlesEnabled) return;
+		if (minecraftInstance.gameSettings.showSubtitles && !subtitlesEnabled) {
+			minecraftInstance.getSoundHandler().addListener(this);
+			subtitlesEnabled = true;
+		} else if (!minecraftInstance.gameSettings.showSubtitles && subtitlesEnabled) {
+			minecraftInstance.getSoundHandler().removeListener(this);
+			subtitlesEnabled = false;
+		} else {
+			subtitlesEnabled = minecraftInstance.gameSettings.showSubtitles;
+		}
+		
+		if (!subtitles.isEmpty()) {
+			Iterator<GuiSubtitleOverlay.Subtitle> iterator = subtitles.iterator();
+			
+			while (iterator.hasNext()) {
+				GuiSubtitleOverlay.Subtitle subtitle = (GuiSubtitleOverlay.Subtitle) iterator.next();
+				if (subtitle.getStartTime() + 3000L <= Minecraft.getSystemTime()) iterator.remove();
+			}
+		}
+	}
+	
+	@Override public void soundPlay(ISound soundIn, SoundEventAccessor accessor) {
+		if (!subtitlesEnabled) return;
+		if (accessor.getSubtitle() != null) {
+			String s = accessor.getSubtitle().getFormattedText();
+			
+			if (!subtitles.isEmpty()) {
+				for (GuiSubtitleOverlay.Subtitle subtitle : subtitles) {
+					if (subtitle.getString().equals(s)) {
+						subtitle.refresh(new Vec3d(0, 0, 0));
+						return;
+					}
+				}
+			}
+			
+			GuiSubtitleOverlay.Subtitle newsub = (new GuiSubtitleOverlay(minecraftInstance)).new Subtitle(s, new Vec3d(0, 0, 0));
+			subtitles.add(newsub);
 		}
 	}
 }
