@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class TooltipEvents {
 	@SubscribeEvent public void onItemTooltip(ItemTooltipEvent event) {
-		if (!event.isShowAdvancedItemTooltips()) {
+		if (!event.getFlags().func_194127_a()) {
 			if (!event.getItemStack().isEmpty()) {
 				ItemStack itemStack = event.getItemStack();
 				if (itemStack.isItemDamaged()) {

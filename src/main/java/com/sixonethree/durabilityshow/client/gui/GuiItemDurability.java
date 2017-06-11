@@ -31,13 +31,12 @@ import net.minecraft.util.math.RayTraceResult.Type;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class GuiItemDurability extends Gui implements ISoundEventListener {
 	private static Minecraft minecraftInstance;
-	private static List<GuiSubtitleOverlay.Subtitle> subtitles = Lists.<GuiSubtitleOverlay.Subtitle>newArrayList();
+	private static List<GuiSubtitleOverlay.Subtitle> subtitles = Lists.<GuiSubtitleOverlay.Subtitle> newArrayList();
 	private static boolean subtitlesEnabled = false;
 	private static EnumGuiState guiState = EnumGuiState.OPEN;
 	private static EnumCorner corner = EnumCorner.BOTTOM_RIGHT;
@@ -49,40 +48,73 @@ public class GuiItemDurability extends Gui implements ISoundEventListener {
 	private static boolean renderCharacter = false;
 	private static boolean renderBaubles = false;
 	private static int overrideRenderCharacterTime = 0;
-	private static Object[][] lastArmorSet = new Object[][] {
-		new String[] {
-			"", "", "", ""
-		},
-		new Integer[] {
-			0, 0, 0, 0
-		}
-	};
+	private static Object[][] lastArmorSet = new Object[][] {new String[] {"", "", "", ""}, new Integer[] {0, 0, 0, 0}};
 	
 	private static final int BOOTS = 1;
 	private static final int LEGGINGS = 2;
 	private static final int CHESTPLATE = 3;
 	private static final int HELMET = 4;
 	
-	public static EnumGuiState getGuiState() { return guiState; }
-	public static int getOffset() { return offsetPosition; }
-	public static void setGuiState(EnumGuiState State) { guiState = State; }
+	public static EnumGuiState getGuiState() {
+		return guiState;
+	}
+	
+	public static int getOffset() {
+		return offsetPosition;
+	}
+	
+	public static void setGuiState(EnumGuiState State) {
+		guiState = State;
+	}
 	
 	public static EnumCorner getCorner() {
 		if (corner == EnumCorner.BOTTOM_RIGHT && !subtitles.isEmpty() && subtitlesEnabled) return EnumCorner.BOTTOM_LEFT;
 		return corner;
 	}
 	
-	public static void setCorner(EnumCorner newCorner) { corner = newCorner; }
-	public static void lowerOffset() { offsetPosition --; }
-	public static void raiseOffset() { offsetPosition ++; }
-	public static void setCloseSize(int size) { closeSize = size; }
-	public static int getCloseSize() { return closeSize; }
-	public static int getOverrideTime() { return overrideRenderCharacterTime; }
-	public static void decOverrideTime() { overrideRenderCharacterTime --; }
-	public static boolean getRenderCharacter() { return renderCharacter; }
-	public static void setRenderChararcter(boolean render) { renderCharacter = render; }
-	public static boolean getRenderBaubles() { return renderBaubles; }
-	public static void setRenderBaubles(boolean render) { renderBaubles = render; }
+	public static void setCorner(EnumCorner newCorner) {
+		corner = newCorner;
+	}
+	
+	public static void lowerOffset() {
+		offsetPosition --;
+	}
+	
+	public static void raiseOffset() {
+		offsetPosition ++;
+	}
+	
+	public static void setCloseSize(int size) {
+		closeSize = size;
+	}
+	
+	public static int getCloseSize() {
+		return closeSize;
+	}
+	
+	public static int getOverrideTime() {
+		return overrideRenderCharacterTime;
+	}
+	
+	public static void decOverrideTime() {
+		overrideRenderCharacterTime --;
+	}
+	
+	public static boolean getRenderCharacter() {
+		return renderCharacter;
+	}
+	
+	public static void setRenderChararcter(boolean render) {
+		renderCharacter = render;
+	}
+	
+	public static boolean getRenderBaubles() {
+		return renderBaubles;
+	}
+	
+	public static void setRenderBaubles(boolean render) {
+		renderBaubles = render;
+	}
 	
 	public GuiItemDurability(Minecraft MC) {
 		super();
@@ -165,11 +197,7 @@ public class GuiItemDurability extends Gui implements ISoundEventListener {
 			}
 		}
 		
-		if (event.isCanceled() ||
-			allNull(current, boots, leggings, chestplate, helmet) ||
-			minecraftInstance.player.capabilities.isCreativeMode ||
-			noSpec ||
-			event.getType() != ElementType.EXPERIENCE) return;
+		if (event.isCanceled() || allNull(current, boots, leggings, chestplate, helmet) || minecraftInstance.player.capabilities.isCreativeMode || noSpec || event.getType() != ElementType.EXPERIENCE) return;
 		
 		/* Compare to last armor set */
 		
@@ -203,14 +231,7 @@ public class GuiItemDurability extends Gui implements ISoundEventListener {
 		String lastChestplateName = (String) lastArmorSet[0][1];
 		String lastLeggingsName = (String) lastArmorSet[0][2];
 		String lastBootsName = (String) lastArmorSet[0][3];
-		if (!lastHelmetName.equalsIgnoreCase(curHelmetName) ||
-			lastArmorSet[1][0] != Integer.valueOf(curHelmetDur) ||
-			!lastChestplateName.equalsIgnoreCase(curChestplateName) ||
-			lastArmorSet[1][1] != Integer.valueOf(curChestplateDur) ||
-			!lastLeggingsName.equalsIgnoreCase(curLeggingsName) ||
-			lastArmorSet[1][2] != Integer.valueOf(curLeggingsDur) ||
-			!lastBootsName.equalsIgnoreCase(curBootsName) ||
-			lastArmorSet[1][3] != Integer.valueOf(curBootsDur)) {
+		if (!lastHelmetName.equalsIgnoreCase(curHelmetName) || lastArmorSet[1][0] != Integer.valueOf(curHelmetDur) || !lastChestplateName.equalsIgnoreCase(curChestplateName) || lastArmorSet[1][1] != Integer.valueOf(curChestplateDur) || !lastLeggingsName.equalsIgnoreCase(curLeggingsName) || lastArmorSet[1][2] != Integer.valueOf(curLeggingsDur) || !lastBootsName.equalsIgnoreCase(curBootsName) || lastArmorSet[1][3] != Integer.valueOf(curBootsDur)) {
 			overrideRenderCharacterTime = 40;
 		}
 		
@@ -230,88 +251,83 @@ public class GuiItemDurability extends Gui implements ISoundEventListener {
 		if (renderCharacter && overrideRenderCharacterTime <= 0) {
 			renderCharacter(getCorner(), 10, scaled, effectivePlayer);
 		} else {
-			if (renderBaubles && Loader.isModLoaded("baubles")) {
-				baubles.api.cap.IBaublesItemHandler handler = baubles.api.BaublesApi.getBaublesHandler(effectivePlayer);
-				ItemStack amulet = handler.getStackInSlot(0);
-				ItemStack ring1 = handler.getStackInSlot(1);
-				ItemStack ring2 = handler.getStackInSlot(2);
-				ItemStack belt = handler.getStackInSlot(3);
-				ItemStack head = handler.getStackInSlot(4);
-				ItemStack body = handler.getStackInSlot(5);
-				ItemStack charm = handler.getStackInSlot(6);
-				
-				int width = scaled.getScaledWidth() + offsetPosition;
-				int height = scaled.getScaledHeight();
-				GlStateManager.color(1, 1, 1, 1);
-				RenderHelper.enableStandardItemLighting();
-				RenderHelper.enableGUIStandardItemLighting();
-				
-				int baubleNumber = 0;
-				baubleNumber += renderBauble(amulet, baubleNumber, width, height);
-				baubleNumber += renderBauble(ring1, baubleNumber, width, height);
-				baubleNumber += renderBauble(ring2, baubleNumber, width, height);
-				baubleNumber += renderBauble(belt, baubleNumber, width, height);
-				baubleNumber += renderBauble(head, baubleNumber, width, height);
-				baubleNumber += renderBauble(body, baubleNumber, width, height);
-				baubleNumber += renderBauble(charm, baubleNumber, width, height);
-				
-				RenderHelper.disableStandardItemLighting();
-			} else {
-				int armorOffset = 16;
-				int width = scaled.getScaledWidth() + offsetPosition;
-				int height = scaled.getScaledHeight();
-				GlStateManager.color(1, 1, 1, 1);
-				RenderHelper.enableStandardItemLighting();
-				RenderHelper.enableGUIStandardItemLighting();
-				boolean armorAllNull = allNull(boots, leggings, chestplate, helmet);
-				
-				int[] params = new int[] {width, height, armorOffset, armorAllNull ? 1 : 0};
-				int[] params2 = new int[] {width, height, 0, armorAllNull ? 1 : 0};
-				
-				if (getCorner().name().contains("RIGHT")) {
-					params2 = renderItem(current, secondary, params, 1);
-					if (!armorAllNull) {
-						renderArmor(boots, BOOTS, params2, 2);
-						renderArmor(leggings, LEGGINGS, params2, 2);
-						renderArmor(chestplate, CHESTPLATE, params2, 2);
-						renderArmor(helmet, HELMET, params2, 2);
-					}
-				} else {
-					boolean params2gotten = false;
-					if (!boots.isEmpty()) {
-						if (!params2gotten) {
-							params2 = renderArmor(boots, BOOTS, params, 1);
-							params2gotten = true;
-						} else {
-							renderArmor(boots, BOOTS, params, 1);
-						}
-					}
-					if (!leggings.isEmpty()) {
-						if (!params2gotten) {
-							params2 = renderArmor(leggings, LEGGINGS, params, 1);
-							params2gotten = true;
-						} else {
-							renderArmor(leggings, LEGGINGS, params, 1);
-						}
-					}
-					if (!chestplate.isEmpty()) {
-						if (!params2gotten) {
-							params2 = renderArmor(chestplate, CHESTPLATE, params, 1);
-							params2gotten = true;
-						} else {
-							renderArmor(chestplate, CHESTPLATE, params, 1);
-						}
-					}
-					if (!helmet.isEmpty()) {
-						if (!params2gotten) {
-							params2 = renderArmor(helmet, HELMET, params, 1);
-							params2gotten = true;
-						} else {
-							renderArmor(helmet, HELMET, params, 1);
-						}
-					}
-					renderItem(current, secondary, params2, 2);
+			/* if (renderBaubles && Loader.isModLoaded("baubles")) {
+			 * baubles.api.cap.IBaublesItemHandler handler =
+			 * baubles.api.BaublesApi.getBaublesHandler(effectivePlayer);
+			 * ItemStack amulet = handler.getStackInSlot(0); ItemStack ring1 =
+			 * handler.getStackInSlot(1); ItemStack ring2 =
+			 * handler.getStackInSlot(2); ItemStack belt =
+			 * handler.getStackInSlot(3); ItemStack head =
+			 * handler.getStackInSlot(4); ItemStack body =
+			 * handler.getStackInSlot(5); ItemStack charm =
+			 * handler.getStackInSlot(6); int width = scaled.getScaledWidth() +
+			 * offsetPosition; int height = scaled.getScaledHeight();
+			 * GlStateManager.color(1, 1, 1, 1);
+			 * RenderHelper.enableStandardItemLighting();
+			 * RenderHelper.enableGUIStandardItemLighting(); int baubleNumber =
+			 * 0; baubleNumber += renderBauble(amulet, baubleNumber, width,
+			 * height); baubleNumber += renderBauble(ring1, baubleNumber, width,
+			 * height); baubleNumber += renderBauble(ring2, baubleNumber, width,
+			 * height); baubleNumber += renderBauble(belt, baubleNumber, width,
+			 * height); baubleNumber += renderBauble(head, baubleNumber, width,
+			 * height); baubleNumber += renderBauble(body, baubleNumber, width,
+			 * height); baubleNumber += renderBauble(charm, baubleNumber, width,
+			 * height); RenderHelper.disableStandardItemLighting(); } else { */
+			int armorOffset = 16;
+			int width = scaled.getScaledWidth() + offsetPosition;
+			int height = scaled.getScaledHeight();
+			GlStateManager.color(1, 1, 1, 1);
+			RenderHelper.enableStandardItemLighting();
+			RenderHelper.enableGUIStandardItemLighting();
+			boolean armorAllNull = allNull(boots, leggings, chestplate, helmet);
+			
+			int[] params = new int[] {width, height, armorOffset, armorAllNull ? 1 : 0};
+			int[] params2 = new int[] {width, height, 0, armorAllNull ? 1 : 0};
+			
+			if (getCorner().name().contains("RIGHT")) {
+				params2 = renderItem(current, secondary, params, 1);
+				if (!armorAllNull) {
+					renderArmor(boots, BOOTS, params2, 2);
+					renderArmor(leggings, LEGGINGS, params2, 2);
+					renderArmor(chestplate, CHESTPLATE, params2, 2);
+					renderArmor(helmet, HELMET, params2, 2);
 				}
+			} else {
+				boolean params2gotten = false;
+				if (!boots.isEmpty()) {
+					if (!params2gotten) {
+						params2 = renderArmor(boots, BOOTS, params, 1);
+						params2gotten = true;
+					} else {
+						renderArmor(boots, BOOTS, params, 1);
+					}
+				}
+				if (!leggings.isEmpty()) {
+					if (!params2gotten) {
+						params2 = renderArmor(leggings, LEGGINGS, params, 1);
+						params2gotten = true;
+					} else {
+						renderArmor(leggings, LEGGINGS, params, 1);
+					}
+				}
+				if (!chestplate.isEmpty()) {
+					if (!params2gotten) {
+						params2 = renderArmor(chestplate, CHESTPLATE, params, 1);
+						params2gotten = true;
+					} else {
+						renderArmor(chestplate, CHESTPLATE, params, 1);
+					}
+				}
+				if (!helmet.isEmpty()) {
+					if (!params2gotten) {
+						params2 = renderArmor(helmet, HELMET, params, 1);
+						params2gotten = true;
+					} else {
+						renderArmor(helmet, HELMET, params, 1);
+					}
+				}
+				renderItem(current, secondary, params2, 2);
+				// }
 				RenderHelper.disableStandardItemLighting();
 			}
 		}
@@ -330,7 +346,7 @@ public class GuiItemDurability extends Gui implements ISoundEventListener {
 		retStatement[1] = params[1];
 		retStatement[2] = params[2];
 		retStatement[3] = params[3];
-
+		
 		ItemStack firstStack = ItemStack.EMPTY;
 		ItemStack secondStack = ItemStack.EMPTY;
 		if (mainHand.isEmpty() && offHand.isEmpty()) return retStatement;
@@ -430,9 +446,9 @@ public class GuiItemDurability extends Gui implements ISoundEventListener {
 	
 	private void renderCharacter(EnumCorner side, int xPos, ScaledResolution scaled, EntityPlayer effectivePlayer) {
 		if (side.name().contains("LEFT")) {
-			GuiInventory.drawEntityOnScreen(xPos - offsetPosition, scaled.getScaledHeight(), xPos - (((xPos / 2) * -1) * 2), -50, - effectivePlayer.rotationPitch, effectivePlayer);
+			GuiInventory.drawEntityOnScreen(xPos - offsetPosition, scaled.getScaledHeight(), xPos - (((xPos / 2) * -1) * 2), -50, -effectivePlayer.rotationPitch, effectivePlayer);
 		} else {
-			GuiInventory.drawEntityOnScreen((scaled.getScaledWidth() - xPos) + offsetPosition, scaled.getScaledHeight(), xPos - (((xPos / 2) * -1) * 2), 50, - effectivePlayer.rotationPitch, effectivePlayer);
+			GuiInventory.drawEntityOnScreen((scaled.getScaledWidth() - xPos) + offsetPosition, scaled.getScaledHeight(), xPos - (((xPos / 2) * -1) * 2), 50, -effectivePlayer.rotationPitch, effectivePlayer);
 		}
 	}
 	
